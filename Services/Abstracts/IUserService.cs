@@ -13,5 +13,7 @@ namespace chat_be.Services.Abstracts{
         Task<List<UserResponse>> GetFriends();
 
         Task<UserModel> CreateUser(UserModel user);
+
+        Task<UserModel> UpdateUser(UserModel user);
     }
 }

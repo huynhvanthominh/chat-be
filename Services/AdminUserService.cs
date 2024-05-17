@@ -32,6 +32,7 @@ namespace chat_be.Services
                 (
                  "admin",
                  "admin",
+                 UserRole.admin,
                   "admin"
                 ));
                 _context.SaveChanges();

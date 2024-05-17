@@ -10,7 +10,8 @@ namespace chat_be.Mappers
         public UserResponse MapUserModelToUserResponse(UserModel user)
         {
             return new UserResponse(
-                 user.Username
+                 user.Username,
+                 user.DisplayName
             );
         }
 

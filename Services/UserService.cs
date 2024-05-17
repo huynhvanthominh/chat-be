@@ -45,5 +45,12 @@ namespace chat_be.Services
         {
             return _context.Users.FirstOrDefaultAsync(x => x.Username == username && x.Password == password);
         }
+
+        public async Task<UserModel> UpdateUser(UserModel user)
+        {
+            _context.Users.Update(user);
+            await _context.SaveChangesAsync();
+            return await Task.FromResult(user);
+        }
     }
 }

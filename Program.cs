@@ -26,17 +26,17 @@ builder.Services.AddSwaggerGen(options =>
             In = ParameterLocation.Header,
             Type = SecuritySchemeType.ApiKey,
             Scheme = "Bearer"
-        }); 
+        });
 });
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IAdminUserService, AdminUserService>();   
+builder.Services.AddScoped<IMapper, Mapper>();
+builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IMapper, Mapper>();
 // create admin service
 using (var serviceScope = builder.Services.BuildServiceProvider().CreateScope())
 {

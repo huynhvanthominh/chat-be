@@ -47,7 +47,9 @@ namespace chat_be.Services
 
             var newUser = new UserModel(
                 user.Username,
-                user.Password
+                user.Password,
+                UserRole.user,
+                user.DisplayName
             );
             return await _userService.CreateUser(newUser);
         }
@@ -102,6 +104,13 @@ namespace chat_be.Services
                 throw new Exception("User not found");
             }
             return user;
+        }
+
+        public async Task<UserModel> UpdateProfile(UpdateProfileRequest request)
+        {
+            var user = await CurrentUser();
+            user.DisplayName = request.DisplayName;
+            return await _userService.UpdateUser(user);
         }
     }
 }

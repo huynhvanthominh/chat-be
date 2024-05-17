@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using chat_be.Mappers.Abstracts;
 using chat_be.Models.Requests;
 using chat_be.Models.Responses;
@@ -15,12 +14,17 @@ namespace chat_be.Controllers
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
 
+        private readonly IMapper _mapper;
+
         public AuthController(
             IAuthService authService,
-            ILogger<AuthController> logger)
+            ILogger<AuthController> logger,
+            IMapper mapper
+            )
         {
             _authService = authService;
             _logger = logger;
+            _mapper = mapper;
         }
 
         [Authorize]
@@ -36,9 +40,7 @@ namespace chat_be.Controllers
             try
             {
                 var user = await _authService.CurrentUser();
-                _logger.LogInformation("User: {0}", user.Username);
-                throw new UnauthorizedAccessException("Unauthorized");
-                // return new PayloadResponse<UserResponse>("User retrieved", true, uddser);
+                return new PayloadResponse<UserResponse>("User retrieved", true, _mapper.userMapper.MapUserModelToUserResponse(user));
             }
             catch (System.Exception e)
             {
@@ -51,16 +53,16 @@ namespace chat_be.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("register")]
-        public async Task<PayloadResponse<RegisterResponse>> Register([FromBody] RegisterRequest request)
+        public async Task<PayloadResponse<UserResponse>> Register([FromBody] RegisterRequest request)
         {
             try
             {
                 var result = await _authService.Register(request);
-                return new PayloadResponse<RegisterResponse>("User created", true, new(result.Username));
+                return new PayloadResponse<UserResponse>("User created", true, _mapper.userMapper.MapUserModelToUserResponse(result));
             }
             catch (Exception e)
             {
-                return new PayloadResponse<RegisterResponse>(e.Message, false, null, 400);
+                return new PayloadResponse<UserResponse>(e.Message, false, null, 400);
             }
         }
 
@@ -82,5 +84,27 @@ namespace chat_be.Controllers
                 return new PayloadResponse<LoginResponse>(e.Message, false, null, 400);
             }
         }
+
+        [Authorize]
+        [HttpPatch("update")]
+        /// <summary>
+        /// Update Profile
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <response code="200">Returns the user</response>
+        public async Task<PayloadResponse<UserResponse>> UpdateProfile([FromBody] UpdateProfileRequest request)
+        {
+            try
+            {
+                var result = await _authService.UpdateProfile(request);
+                return new PayloadResponse<UserResponse>("Profile updated", true, _mapper.userMapper.MapUserModelToUserResponse(result));
+            }
+            catch (Exception e)
+            {
+                return new PayloadResponse<UserResponse>(e.Message, false, null, 400);
+            }
+        }
+    
     }
 }
