@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "jcLxGlnbASfi9bFG+m1n8jBoX3rtEeVyFTBbKXw31tY=",
+  "Source": "chat-be",
+  "BasePath": "_content/chat-be",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
