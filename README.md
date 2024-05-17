@@ -1,6 +1,6 @@
-use docker to run database
+# use docker to run database
 1. Open docker
 2. docker-compose up
-run source
+# run source
 3. dotnet run or dotnet watch
 

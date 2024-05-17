@@ -45,12 +45,12 @@ namespace chat_be.Controllers
                 return new PayloadResponse<UserResponse>(e.Message, false, null, 400);
             }
         }
-        [HttpPost("register")]
         /// <summary>
         /// Register
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
+        [HttpPost("register")]
         public async Task<PayloadResponse<RegisterResponse>> Register([FromBody] RegisterRequest request)
         {
             try

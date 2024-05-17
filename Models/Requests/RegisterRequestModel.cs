@@ -12,5 +12,7 @@ namespace chat_be.Models.Requests
         [Required]
         [Compare("Password")]
         public string ConfirmPassword { get; set; }
+
+        public string DisplayName { get; set; }
     }
 }
