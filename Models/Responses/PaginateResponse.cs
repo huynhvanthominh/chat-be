@@ -2,17 +2,26 @@ namespace chat_be.Models.Responses
 {
     public class PaginatedResponse<T> 
     {
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int Total { get; set; }
+        public int CurrentPage { get; set; }
+        public int TotalPage { get; set; }
+
+        public int CountPerPage { get; set; }
+        public int TotalCount { get; set; }
         public List<T> Data { get; set; }
 
-        public PaginatedResponse(int page, int pageSize, int total, List<T> data)
+        public PaginatedResponse(
+            int TotalPage,
+            int CurrentPage,
+            int CountPerPage,
+            int TotalCount,
+            List<T> Data
+            )
         {
-            Page = page;
-            PageSize = pageSize;
-            Total = total;
-            Data = data;
+            this.TotalPage = TotalPage;
+            this.CurrentPage = CurrentPage;
+            this.CountPerPage = CountPerPage;
+            this.TotalCount = TotalCount;
+            this.Data = Data;
         }
     }
 }

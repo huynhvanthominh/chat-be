@@ -1,4 +1,5 @@
 using chat_be.Mappers.Abstracts;
+using chat_be.Models;
 using chat_be.Models.Responses;
 using chat_be.Services.Abstracts;
 using Microsoft.AspNetCore.Mvc;
@@ -31,9 +32,15 @@ namespace chat_be.Controllers.Admin
                 return new PayloadResponse<PaginatedResponse<UserResponse>>(
                     "Users retrieved",
                     true,
-                    new PaginatedResponse<UserResponse>(1, 10, 20,
-                    _mapper.userMapper.MapUserModelToUserResponse(users)
-                    ));
+                    new PaginatedResponse<UserResponse>(
+                        1,
+                        1,
+                        1,
+                        users.Count,
+                        users.ToResponse()
+                        ),
+                    200
+                    );
             }
             catch (Exception e)
             {

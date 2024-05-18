@@ -1,4 +1,6 @@
+using System.Reflection;
 using System.Text;
+using chat_be.Configs;
 using chat_be.Data;
 using chat_be.Mappers;
 using chat_be.Mappers.Abstracts;
@@ -8,45 +10,19 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
+builder.Services.AddAuthorization();
+builder.Services.AddAuthentication(options =>
 {
-    options.SwaggerDoc("v1", new() { Title = "My API", Version = "v1" });
-    options.AddSecurityDefinition(
-        "Bearer",
-        new OpenApiSecurityScheme
-        {
-            Description = "JWT Authorization header using the Bearer scheme.",
-            Name = "Authorization",
-            In = ParameterLocation.Header,
-            Type = SecuritySchemeType.ApiKey,
-            Scheme = "Bearer"
-        });
-});
-builder.Services.AddControllersWithViews();
-
-builder.Services.AddDbContext<DatabaseContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IMapper, Mapper>();
-builder.Services.AddScoped<IAdminUserService, AdminUserService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IAuthService, AuthService>();
-// create admin service
-using (var serviceScope = builder.Services.BuildServiceProvider().CreateScope())
-{
-    var context = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
-    context.Database.EnsureCreated();
-    var adminService = serviceScope.ServiceProvider.GetRequiredService<IAdminUserService>();
-    adminService.initAdmin();
-}
-
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
 {
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
@@ -60,6 +36,41 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 
 });
 
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer"
+    });
+    options.OperationFilter<SecurityRequirementsOperationFilter>(
+        true, "Bearer"
+    );
+});
+builder.Services.AddControllersWithViews();
+
+builder.Services.AddDbContext<DatabaseContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<IMapper, Mapper>();
+builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<Func<IUserService>>(provider => () => provider.GetRequiredService<IUserService>());
+// create admin service
+// using (var serviceScope = builder.Services.BuildServiceProvider().CreateScope())
+// {
+// var context = serviceScope.ServiceProvider.GetRequiredService<DatabaseContext>();
+// context.Database.EnsureCreated();
+// var adminService = serviceScope.ServiceProvider.GetRequiredService<IAdminUserService>();
+// adminService.initAdmin();
+// }
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -70,7 +81,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
+app.MapSwagger().RequireAuthorization();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -12,7 +12,7 @@ namespace chat_be.Services
     public class AuthService : IAuthService
     {
 
-        private readonly IUserService _userService;
+        private readonly Func<IUserService> _userServiceFactory;
         private readonly ILogger<AuthService> _logger;
         private readonly IConfiguration _config;
 
@@ -20,20 +20,20 @@ namespace chat_be.Services
 
 
         public AuthService(
-            IUserService userService,
+            Func<IUserService> userServiceFactory,
             ILogger<AuthService> logger,
             IConfiguration config,
             IHttpContextAccessor httpContextAccessor
         )
         {
-            _userService = userService;
+            _userServiceFactory = userServiceFactory;
             _logger = logger;
             _config = config;
             _httpContextAccessor = httpContextAccessor;
         }
         public async Task<UserModel> Register(RegisterRequest user)
         {
-            var userExists = await _userService.GetUser(user.Username);
+            var userExists = await _userServiceFactory().GetUser(user.Username);
             _logger.LogInformation("User exists: {0}", userExists?.Username);
             if (userExists != null)
             {
@@ -51,11 +51,11 @@ namespace chat_be.Services
                 UserRole.user,
                 user.DisplayName
             );
-            return await _userService.CreateUser(newUser);
+            return await _userServiceFactory().CreateUser(newUser);
         }
         public async Task<LoginResponse> Login(LoginRequest user)
         {
-            var userExists = await _userService.GetUser(user.Username, user.Password);
+            var userExists = await _userServiceFactory().GetUser(user.Username, user.Password);
             if (userExists != null)
             {
                 return GenerateAccessToken(userExists);
@@ -98,7 +98,7 @@ namespace chat_be.Services
             {
                 throw new Exception("User not found");
             }
-            var user = await _userService.GetUser(userName);
+            var user = await _userServiceFactory().GetUser(userName);
             if (user == null)
             {
                 throw new Exception("User not found");
@@ -110,7 +110,7 @@ namespace chat_be.Services
         {
             var user = await CurrentUser();
             user.DisplayName = request.DisplayName;
-            return await _userService.UpdateUser(user);
+            return await _userServiceFactory().UpdateUser(user);
         }
     }
 }
