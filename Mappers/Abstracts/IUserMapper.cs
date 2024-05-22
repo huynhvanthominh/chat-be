@@ -5,7 +5,7 @@ namespace chat_be.Mappers.Abstracts
 {
     public interface IUserMapper
     {
-        public UserResponse MapUserModelToUserResponse(UserModel user);
-        public List<UserResponse> MapUserModelToUserResponse(List<UserModel> users);
+        // public UserResponse MapUserModelToUserResponse(UserModel user);
+        // public List<UserResponse> MapUserModelToUserResponse(List<UserModel> users);
     }
 }

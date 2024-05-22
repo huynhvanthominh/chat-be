@@ -1,4 +1,5 @@
 using chat_be.Mappers.Abstracts;
+using chat_be.Models;
 using chat_be.Models.Requests;
 using chat_be.Models.Responses;
 using chat_be.Services.Abstracts;
@@ -14,17 +15,17 @@ namespace chat_be.Controllers
         private readonly IAuthService _authService;
         private readonly ILogger<AuthController> _logger;
 
-        private readonly IMapper _mapper;
+        // private readonly IMapper _mapper;
 
         public AuthController(
             IAuthService authService,
-            ILogger<AuthController> logger,
-            IMapper mapper
+            ILogger<AuthController> logger
+            // IMapper mapper
             )
         {
             _authService = authService;
             _logger = logger;
-            _mapper = mapper;
+            // _mapper = mapper;
         }
 
         [Authorize]
@@ -35,16 +36,16 @@ namespace chat_be.Controllers
         /// <returns></returns>
         /// <response code="200">Returns the user</response>
         /// <response code="401">Unauthorized</response>
-        public async Task<PayloadResponse<UserResponse>> Me()
+        public async Task<IActionResult> Me()
         {
             try
             {
                 var user = await _authService.CurrentUser();
-                return new PayloadResponse<UserResponse>("User retrieved", true, _mapper.userMapper.MapUserModelToUserResponse(user));
+                return Ok(user.ToResponse());
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
-                return new PayloadResponse<UserResponse>(e.Message, false, null, 400);
+                return BadRequest(e.Message);
             }
         }
         /// <summary>
@@ -58,7 +59,9 @@ namespace chat_be.Controllers
             try
             {
                 var result = await _authService.Register(request);
-                return new PayloadResponse<UserResponse>("User created", true, _mapper.userMapper.MapUserModelToUserResponse(result));
+                return new PayloadResponse<UserResponse>("User created", true,
+                result.ToResponse()
+                );
             }
             catch (Exception e)
             {
@@ -93,18 +96,20 @@ namespace chat_be.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         /// <response code="200">Returns the user</response>
-        public async Task<PayloadResponse<UserResponse>> UpdateProfile([FromBody] UpdateProfileRequest request)
+        public async Task<PayloadResponse<UserResponse>> UpdateProfile([FromForm] UpdateProfileRequest request)
         {
             try
             {
                 var result = await _authService.UpdateProfile(request);
-                return new PayloadResponse<UserResponse>("Profile updated", true, _mapper.userMapper.MapUserModelToUserResponse(result));
+                return new PayloadResponse<UserResponse>("Profile updated", true,
+                 result.ToResponse()
+                 );
             }
             catch (Exception e)
             {
                 return new PayloadResponse<UserResponse>(e.Message, false, null, 400);
             }
         }
-    
+
     }
 }

@@ -1,6 +1,6 @@
 namespace chat_be.Models.Responses
 {
-    public class PaginatedResponse<T> 
+    public class PaginatedResponse<T>
     {
         public int CurrentPage { get; set; }
         public int TotalPage { get; set; }
@@ -9,6 +9,8 @@ namespace chat_be.Models.Responses
         public int TotalCount { get; set; }
         public List<T> Data { get; set; }
 
+        public PaginatedResponse()
+        { }
         public PaginatedResponse(
             int TotalPage,
             int CurrentPage,

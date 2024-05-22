@@ -23,18 +23,56 @@ namespace chat_be.Services
             _authService = authService;
             _logger = logger;
         }
-        public async Task<List<UserModel>> GetFriends()
+        public async Task<PaginatedResponse<MakeFriendModel>> GetFriends(
+            PaginateRequest options
+        )
         {
-            using (var context = _context)
+            var currentUser = await _authService.CurrentUser();
+            var friends = await _context.MakeFriendModels
+                .Where(x => (x.UserId == currentUser.Id || x.FriendId == currentUser.Id) && x.IsAccepted)
+                .Join(
+                    _context.Users,
+                    x => x.UserId == currentUser.Id ? x.FriendId : x.UserId,
+                    x => x.Id,
+                    (makeFriend, user) => new { makeFriend, user }
+                )
+                .ToPaginatedListAsync(options.Page, options.CountPerPage);
+            var isCallback = false;
+            friends.Data.ForEach(async x =>
             {
-                var currentUser = await _authService.CurrentUser();
-                _logger.LogInformation("Current user: {0}", currentUser.Username);
-                var friends = await context.MakeFriendModels
-                    .Where(x => x.UserId == currentUser.Id)
-                    .Select(x => x.Friend)
-                    .ToListAsync();
-                return await Task.FromResult(friends);
+                if (x.makeFriend.MessageGroupId == null || x.makeFriend.MessageGroupId == 0)
+                {
+                    var messageGroup = new MessageGroupModel();
+                    await _context.MessageGroupModels.AddAsync(messageGroup);
+                    await _context.SaveChangesAsync();
+                    var messageGroupUser1 = new MessageGroupUserModel()
+                    {
+                        MessageGroupId = messageGroup.Id,
+                        UserId = currentUser.Id
+                    };
+                    var messageGroupUser2 = new MessageGroupUserModel()
+                    {
+                        MessageGroupId = messageGroup.Id,
+                        UserId = x.user.Id
+                    };
+                    await _context.MessageGroupUserModels.AddAsync(messageGroupUser1);
+                    await _context.MessageGroupUserModels.AddAsync(messageGroupUser2);
+                    await _context.SaveChangesAsync();
+                    isCallback = true;
+                }
+            });
+            if (isCallback)
+            {
+                return await GetFriends(options);
             }
+            return await Task.FromResult(
+                new PaginatedResponse<MakeFriendModel>(
+                    friends.TotalPage,
+                    friends.CurrentPage,
+                    friends.CountPerPage,
+                    friends.TotalCount,
+                    friends.Data.Select(x => x.makeFriend).ToList()
+                ));
         }
 
         public async Task<PaginatedResponse<UserModel>> GetMakeFriendRequests(
@@ -42,28 +80,51 @@ namespace chat_be.Services
         )
         {
             var currentUser = await _authService.CurrentUser();
-            var friendRequests = await  _context.MakeFriendModels
-                .Where(x => x.UserId == currentUser.Id)
-                .Select(x => x.Friend)
-                .ToPaginatedListAsync(options.Page, options.CountPerPage);
+            var friendRequests = await _context.MakeFriendModels
+                .Where(x => x.UserId == currentUser.Id && !x.IsAccepted)
+                .Join(
+                    _context.Users,
+                    x => x.FriendId,
+                    x => x.Id,
+                    (makeFriend, user) => user
+                )
+                .ToPaginatedListAsync(
+                    options.Page,
+                    options.CountPerPage
+                );
             return await Task.FromResult(friendRequests);
         }
-        
 
-        public Task<List<UserModel>> GetReceivedFriendRequests()
+
+        public async Task<PaginatedResponse<UserModel>> GetReceivedFriendRequests(
+            PaginateRequest options
+        )
         {
-            var currentUser = _authService.CurrentUser();
-            var receivedFriendRequests = _context.MakeFriendModels
-                .Where(x => x.UserId == currentUser.Id)
-                .Select(x => x.Friend)
-                .ToListAsync();
+            var currentUser = await _authService.CurrentUser();
+            var receivedFriendRequests = await _context.MakeFriendModels
+                .Where(x => x.FriendId == currentUser.Id && !x.IsAccepted)
+                .Join(
+                    _context.Users,
+                    x => x.UserId,
+                    x => x.Id,
+                    (makeFriend, user) => user
+                )
+                .ToPaginatedListAsync(
+                    options.Page,
+                    options.CountPerPage
+                );
 
-            return receivedFriendRequests;
+            return await Task.FromResult(receivedFriendRequests);
         }
 
         public Task<UserModel?> GetUser(string username)
         {
             return _context.Users.FirstOrDefaultAsync(x => x.Username == username);
+        }
+
+        public Task<UserModel?> GetUser(int userId)
+        {
+            return _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
         }
 
         public Task<UserModel?> GetUser(string username, string password)
@@ -74,7 +135,7 @@ namespace chat_be.Services
         public async Task<MakeFriendModel> AddFriend(AddFriendRequest request)
         {
             var currentUser = await _authService.CurrentUser();
-            var user = await GetUser(request.Username);
+            var user = await GetUser(request.UserId);
             if (user == null)
             {
                 throw new Exception("User not found");
@@ -83,17 +144,41 @@ namespace chat_be.Services
             {
                 throw new Exception("Cannot add yourself as a friend");
             }
-            _logger.LogInformation("User: {0}", user.Username);
-            _logger.LogInformation("Current user: {0}", currentUser.Username);
-            var makeFriend = new MakeFriendModel(currentUser.Id, user.Id);
+            var messageGroup = new MessageGroupModel();
+            await _context.MessageGroupModels.AddAsync(messageGroup);
+            await _context.SaveChangesAsync();
+            var messageGroupUser1 = new MessageGroupUserModel()
+            {
+                MessageGroupId = messageGroup.Id,
+                UserId = currentUser.Id
+            };
+            var messageGroupUser2 = new MessageGroupUserModel()
+            {
+                MessageGroupId = messageGroup.Id,
+                UserId = user.Id
+            };
+            await _context.MessageGroupUserModels.AddAsync(messageGroupUser1);
+            await _context.MessageGroupUserModels.AddAsync(messageGroupUser2);
+            await _context.SaveChangesAsync();
+            var makeFriend = new MakeFriendModel(currentUser.Id, user.Id, messageGroup.Id);
             _context.MakeFriendModels.Add(makeFriend);
             await _context.SaveChangesAsync();
             return await Task.FromResult(makeFriend);
         }
 
-        public async Task ConfirmFriend(AddFriendRequest request)
+        public async Task<MakeFriendModel> ConfirmFriend(ConfirmFriendRequest request)
         {
-            throw new NotImplementedException();
+            var currentUser = await _authService.CurrentUser();
+            var makeFriend = await _context.MakeFriendModels
+                .FirstOrDefaultAsync(x => x.UserId == request.UserId && x.FriendId == currentUser.Id && !x.IsAccepted);
+            if (makeFriend == null)
+            {
+                throw new Exception("Friend request not found");
+            }
+            makeFriend.IsAccepted = true;
+            _context.MakeFriendModels.Update(makeFriend);
+            await _context.SaveChangesAsync();
+            return await Task.FromResult(makeFriend);
         }
 
         public async Task<UserModel> CreateUser(UserModel user)

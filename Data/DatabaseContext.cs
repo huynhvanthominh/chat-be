@@ -15,35 +15,49 @@ namespace chat_be.Data
 
         public DbSet<MakeFriendModel> MakeFriendModels { get; set; }
 
+        public DbSet<MessageModel> MessageModels { get; set; }
+
+        public DbSet<MessageGroupUserModel> MessageGroupUserModels { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
             modelBuilder.Entity<MakeFriendModel>()
-                .HasKey(m => new { m.UserId, m.FriendId });
-            modelBuilder.Entity<MakeFriendModel>()
-                .HasOne(m => m.User)
-                .WithMany(u => u.ReceivedFriendRequests)
-                .HasForeignKey(m => m.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<MakeFriendModel>()
-                .HasOne(m => m.Friend)
-                .WithMany(u => u.MakeFriendRequests)
-                .HasForeignKey(m => m.FriendId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .HasKey(x => new { x.UserId, x.FriendId });
+            modelBuilder.Entity<UserModel>()
+            .HasData(
+                new UserModel("admin", "admin", UserRole.admin, "Admin") { Id = 1 },
+                new UserModel("user1", "user", UserRole.user, "User 1") { Id = 2 },
+                new UserModel("user2", "user", UserRole.user, "User 2") { Id = 3 },
+                new UserModel("user3", "user", UserRole.user, "User 3") { Id = 4 },
+                new UserModel("user4", "user", UserRole.user, "User 4") { Id = 5 },
+                new UserModel("user5", "user", UserRole.user, "User 5") { Id = 6 },
+                new UserModel("user6", "user", UserRole.user, "User 6") { Id = 7 },
+                new UserModel("user7", "user", UserRole.user, "User 7") { Id = 8 },
+                new UserModel("user8", "user", UserRole.user, "User 8") { Id = 9 },
+                new UserModel("user9", "user", UserRole.user, "User 9") { Id = 10 },
+                new UserModel("user10", "user", UserRole.user, "User 10") { Id = 11 }
+                );
+                modelBuilder.Entity<MessageGroupUserModel>()
+                .HasOne(mgu => mgu.MessageGroup)
+                .WithMany(mg => mg.MessageGroupUsers)
+                .HasForeignKey(mgu => mgu.MessageGroupId);
+                modelBuilder.Entity<MessageGroupUserModel>()
+                .HasOne(mgu => mgu.User)
+                .WithMany()
+                .HasForeignKey(mgu => mgu.UserId);
         }
+
     }
 
     public static class IQueryableExtensions
     {
         public static async Task<PaginatedResponse<T>> ToPaginatedListAsync<T>(
-     this IQueryable<T> source, int pageNumber, int pageSize
-     )
+            this IQueryable<T> source, int pageNumber, int pageSize
+        )
         {
             var count = await source.CountAsync();
             var items = await source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
-            // total page
             var totalPage = (int)Math.Ceiling(count / (double)pageSize);
             return new PaginatedResponse<T>(totalPage, pageNumber, pageSize, count, items);
         }

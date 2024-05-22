@@ -12,15 +12,15 @@ namespace chat_be.Controllers.Admin
     public class AdminUserController : Controller
     {
         private readonly IAdminUserService _adminUserService;
-        private readonly IMapper _mapper;
+        // private readonly IMapper _mapper;
 
         public AdminUserController(
-            IAdminUserService adminUserService,
-            IMapper mapper
+            IAdminUserService adminUserService
+            // IMapper mapper
             )
         {
             _adminUserService = adminUserService;
-            _mapper = mapper;
+            // _mapper = mapper;
         }
 
         [HttpGet]

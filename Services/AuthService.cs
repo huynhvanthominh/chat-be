@@ -82,7 +82,7 @@ namespace chat_be.Services
             var token = new JwtSecurityToken(_config["Jwt:Issuer"],
               _config["Jwt:Issuer"],
               claims,
-              expires: DateTime.Now.AddMinutes(120),
+              expires: DateTime.Now.AddDays(1),
               signingCredentials: credentials);
             return new LoginResponse(
                 new JwtSecurityTokenHandler().WriteToken(token),
@@ -108,7 +108,19 @@ namespace chat_be.Services
 
         public async Task<UserModel> UpdateProfile(UpdateProfileRequest request)
         {
+            _logger.LogInformation("UpdateProfileRequest: {0}", request.DisplayName);
+            var file = request.AvatarFile;
             var user = await CurrentUser();
+            if (file.Length > 0)
+            {
+                var filePath = Path.Combine("wwwroot", "uploads", Path.GetRandomFileName() + file.FileName);
+
+                using (var stream = File.Create(filePath))
+                {
+                    await file.CopyToAsync(stream);
+                }
+                user.Avatar = filePath.Split("wwwroot")[1];
+            }
             user.DisplayName = request.DisplayName;
             return await _userServiceFactory().UpdateUser(user);
         }

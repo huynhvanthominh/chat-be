@@ -1,9 +1,6 @@
-using System.Reflection;
 using System.Text;
-using chat_be.Configs;
 using chat_be.Data;
-using chat_be.Mappers;
-using chat_be.Mappers.Abstracts;
+using chat_be.Hubs;
 using chat_be.Services;
 using chat_be.Services.Abstracts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,6 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(options =>
@@ -33,7 +31,20 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
     };
-
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/api/hub")))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 
 builder.Services.AddSwaggerGen(options =>
@@ -50,18 +61,32 @@ builder.Services.AddSwaggerGen(options =>
         true, "Bearer"
     );
 });
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    //    options.JsonSerializerOptions.PropertyNamingPolicy = null;
+    //     options.JsonSerializerOptions.DictionaryKeyPolicy = null;
+    //     options.JsonSerializerOptions.IgnoreNullValues = true;
+    //     options.JsonSerializerOptions.WriteIndented = true;
+    //     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    //     options.JsonSerializerOptions.AllowTrailingCommas = true;
+    //     options.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
+    //     options.JsonSerializerOptions.Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
+    //     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
 
 builder.Services.AddDbContext<DatabaseContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddScoped<IMapper, Mapper>();
+// builder.Services.AddScoped<IMapper, Mapper>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<Func<IUserService>>(provider => () => provider.GetRequiredService<IUserService>());
+builder.Services.AddScoped<IMessageService, MessageService>();
 // create admin service
 // using (var serviceScope = builder.Services.BuildServiceProvider().CreateScope())
 // {
@@ -72,7 +97,8 @@ builder.Services.AddScoped<Func<IUserService>>(provider => () => provider.GetReq
 // }
 
 var app = builder.Build();
-
+app.UseDefaultFiles();
+app.UseStaticFiles();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -85,4 +111,5 @@ app.MapSwagger().RequireAuthorization();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<ChatHup>("/api/hub");
 app.Run();

@@ -1,6 +1,7 @@
+using System.CodeDom.Compiler;
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using chat_be.Models.Responses;
-
 namespace chat_be.Models
 {
 
@@ -23,9 +24,13 @@ namespace chat_be.Models
         [StringLength(5)]
         public UserRole Role { get; set; }
         public string DisplayName { get; set; }
+        [AllowNull]
+        public string? Avatar { get; set; }
 
-        public virtual ICollection<MakeFriendModel> MakeFriendRequests { get; set; }
-        public virtual ICollection<MakeFriendModel> ReceivedFriendRequests { get; set; }
+        public UserModel()
+        {
+            Avatar = "";
+        }
 
         public UserModel(
             string Username,
@@ -38,8 +43,6 @@ namespace chat_be.Models
             this.Password = Password;
             this.Role = Role;
             this.DisplayName = DisplayName == "" ? Username : DisplayName;
-            this.MakeFriendRequests = [];
-            this.ReceivedFriendRequests = [];
         }
     }
 
@@ -48,8 +51,10 @@ namespace chat_be.Models
         public static UserResponse ToResponse(this UserModel user)
         {
             return new UserResponse(
+                user.Id,
                 user.Username,
-                user.DisplayName
+                user.DisplayName,
+                user.Avatar
             );
         }
         public static List<UserResponse> ToResponse(this List<UserModel> users)

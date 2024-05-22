@@ -1,3 +1,4 @@
+using chat_be.Extensions;
 using chat_be.Mappers.Abstracts;
 using chat_be.Models.Requests;
 using chat_be.Models.Responses;
@@ -16,24 +17,42 @@ namespace chat_be.Controllers
 
         private readonly IUserService _userService;
         private readonly ILogger<UserController> _logger;
-        private readonly IMapper _mapper;
+        private readonly IAuthService _authService;
+        // private readonly IMapper _mapper;
 
         public UserController(
             IUserService userService,
             ILogger<UserController> logger,
-            IMapper mapper
+            IAuthService authService
+            // IMapper mapper
             )
         {
             _userService = userService;
             _logger = logger;
-            _mapper = mapper;
+            _authService = authService;
+            // _mapper = mapper;
         }
 
         // get friends
         [HttpGet("friends")]
-        public async Task<IActionResult> GetFriends()
+        public async Task<PayloadResponse<PaginatedResponse<FriendResponse>>> GetFriends(
+            [FromQuery] PaginateRequest options
+        )
         {
-            return Ok(new List<UserResponse>());
+            try
+            {
+                var friends = await _userService.GetFriends(options);
+                var current = await _authService.CurrentUser();
+                return new PayloadResponse<PaginatedResponse<FriendResponse>>(
+                    "Friends retrieved",
+                    true,
+                    friends.ToFriendResponse(current),
+                    200);
+            }
+            catch (Exception e)
+            {
+                return new PayloadResponse<PaginatedResponse<FriendResponse>>(e.Message, false, null, 400);
+            }
         }
 
         // get friend requests
@@ -62,9 +81,23 @@ namespace chat_be.Controllers
 
         // get received friend requests
         [HttpGet("received-make-friend-requests")]
-        public async Task<IActionResult> GetReceivedFriendRequests()
+        public async Task<PayloadResponse<PaginatedResponse<UserResponse>>> GetReceivedFriendRequests(
+            [FromQuery] PaginateRequest options
+        )
         {
-            throw new NotImplementedException();
+            try
+            {
+                var receivedFriendRequests = await _userService.GetReceivedFriendRequests(options);
+                return new PayloadResponse<PaginatedResponse<UserResponse>>(
+                    "Received friend requests retrieved",
+                    true,
+                    receivedFriendRequests.ToResponse(),
+                    200);
+            }
+            catch (Exception e)
+            {
+                return new PayloadResponse<PaginatedResponse<UserResponse>>(e.Message, false, null, 400);
+            }
         }
 
         // add friend
@@ -85,9 +118,17 @@ namespace chat_be.Controllers
 
         // confirm friend
         [HttpPost("confirm-friend")]
-        public async Task<IActionResult> ConfirmFriend(AddFriendRequest request)
+        public async Task<PayloadResponse<Boolean>> ConfirmFriend(ConfirmFriendRequest request)
         {
-            return Ok();
+            try
+            {
+                await _userService.ConfirmFriend(request);
+                return new PayloadResponse<Boolean>("Friend request confirmed", true, true);
+            }
+            catch (Exception e)
+            {
+                return new PayloadResponse<Boolean>(e.Message, false, false, 400);
+            }
         }
     }
 }
