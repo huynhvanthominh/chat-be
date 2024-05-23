@@ -1,7 +1,5 @@
-using chat_be.Mappers.Abstracts;
 using chat_be.Models;
 using chat_be.Models.Requests;
-using chat_be.Models.Responses;
 using chat_be.Services.Abstracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,18 +52,16 @@ namespace chat_be.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("register")]
-        public async Task<PayloadResponse<UserResponse>> Register([FromBody] RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             try
             {
                 var result = await _authService.Register(request);
-                return new PayloadResponse<UserResponse>("User created", true,
-                result.ToResponse()
-                );
+                return Ok(result.ToResponse());
             }
             catch (Exception e)
             {
-                return new PayloadResponse<UserResponse>(e.Message, false, null, 400);
+                return BadRequest(e.Message);
             }
         }
 
@@ -75,16 +71,16 @@ namespace chat_be.Controllers
         /// </summary>
         /// <param name="request"></param>
         /// <returns></returns>
-        public async Task<PayloadResponse<LoginResponse>> Login(LoginRequest request)
+        public async Task<IActionResult> Login(LoginRequest request)
         {
             try
             {
                 var result = await _authService.Login(request);
-                return new PayloadResponse<LoginResponse>("Login successful", true, result);
+                return Ok(result);
             }
             catch (Exception e)
             {
-                return new PayloadResponse<LoginResponse>(e.Message, false, null, 400);
+                return BadRequest(e.Message);
             }
         }
 
@@ -96,20 +92,17 @@ namespace chat_be.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         /// <response code="200">Returns the user</response>
-        public async Task<PayloadResponse<UserResponse>> UpdateProfile([FromForm] UpdateProfileRequest request)
+        public async Task<IActionResult> UpdateProfile([FromForm] UpdateProfileRequest request)
         {
             try
             {
                 var result = await _authService.UpdateProfile(request);
-                return new PayloadResponse<UserResponse>("Profile updated", true,
-                 result.ToResponse()
-                 );
+                return Ok(result.ToResponse());
             }
             catch (Exception e)
             {
-                return new PayloadResponse<UserResponse>(e.Message, false, null, 400);
+                return BadRequest(e.Message);
             }
         }
-
     }
 }

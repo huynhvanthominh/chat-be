@@ -13,14 +13,14 @@ namespace chat_be.Hubs
         {
             _messageService = messageService;
         }
-        public async Task SendMessage(string group, string message)
+        public async Task SendMessage(SendMessageRequest request)
         {
-            var ms = await _messageService.SendMessage(new SendMessageRequest
+            if(string.IsNullOrEmpty(request.Message))
             {
-                Message = message,
-                MessageGroupId = int.Parse(group)
-            });
-            await Clients.All.SendAsync("ReceiveMessage", group, ms);
+                return;
+            }
+            var ms = await _messageService.SendMessage(request);
+            await Clients.Users(ms.UserIds.Select(x => x.ToString())).SendAsync("ReceiveMessage", ms);
         }
 
         public override async Task OnConnectedAsync()

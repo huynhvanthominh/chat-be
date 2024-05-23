@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 using chat_be.Models;
 using chat_be.Models.Requests;
 using chat_be.Models.Responses;
@@ -69,7 +70,11 @@ namespace chat_be.Services
         private LoginResponse GenerateAccessToken(UserModel user)
         {
             var claims = new[] {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim(ClaimTypes.Name, user.DisplayName),
+                new Claim("username", user.Username),
+                new Claim("avatar", user.Avatar ?? "" ),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
             return GetToken(claims);
@@ -91,24 +96,31 @@ namespace chat_be.Services
             );
         }
 
-        public async Task<UserModel> CurrentUser()
+        public Task<UserModel> CurrentUser()
         {
-            var userName = _httpContextAccessor.HttpContext?.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
-            if (userName == null)
+            var claims = (_httpContextAccessor.HttpContext?.User.Claims) ?? throw new Exception("Unauthorized");
+            var username = claims.FirstOrDefault(c => c.Type == "username")?.Value;
+            var role = claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+            var userId = claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            var displayName = claims.FirstOrDefault(c => c.Type == ClaimTypes.Name)?.Value;
+            var avatar = claims.FirstOrDefault(c => c.Type == "avatar")?.Value;
+            if (username == null || role == null || userId == null || displayName == null)
             {
-                throw new Exception("User not found");
+                throw new Exception("Unauthorized");
             }
-            var user = await _userServiceFactory().GetUser(userName);
-            if (user == null)
+            var user = new UserModel
             {
-                throw new Exception("User not found");
-            }
-            return user;
+                Id = int.Parse(userId),
+                Username = username,
+                Role = (UserRole)Enum.Parse(typeof(UserRole), role),
+                DisplayName = displayName,
+                Avatar = avatar
+            };
+            return Task.FromResult(user);
         }
 
         public async Task<UserModel> UpdateProfile(UpdateProfileRequest request)
         {
-            _logger.LogInformation("UpdateProfileRequest: {0}", request.DisplayName);
             var file = request.AvatarFile;
             var user = await CurrentUser();
             if (file.Length > 0)

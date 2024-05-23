@@ -35,7 +35,7 @@ namespace chat_be.Controllers
 
         // get friends
         [HttpGet("friends")]
-        public async Task<PayloadResponse<PaginatedResponse<FriendResponse>>> GetFriends(
+        public async Task<IActionResult> GetFriends(
             [FromQuery] PaginateRequest options
         )
         {
@@ -43,91 +43,75 @@ namespace chat_be.Controllers
             {
                 var friends = await _userService.GetFriends(options);
                 var current = await _authService.CurrentUser();
-                return new PayloadResponse<PaginatedResponse<FriendResponse>>(
-                    "Friends retrieved",
-                    true,
-                    friends.ToFriendResponse(current),
-                    200);
+                return Ok(friends.ToFriendResponse(current));
             }
             catch (Exception e)
             {
-                return new PayloadResponse<PaginatedResponse<FriendResponse>>(e.Message, false, null, 400);
+                return BadRequest(e.Message);
             }
         }
 
         // get friend requests
         [HttpGet("make-friend-requests")]
-        public async Task<PayloadResponse<PaginatedResponse<UserResponse>>> GetMakeFriendRequests(
+        public async Task<IActionResult> GetMakeFriendRequests(
              [FromQuery] PaginateRequest options
         )
         {
-            _logger.LogInformation("Get make friend requests: ");
-            _logger.LogInformation(options.CountPerPage.ToString());
-            _logger.LogInformation(options.Page.ToString());
             try
             {
                 var makeFriendRequests = await _userService.GetMakeFriendRequests(options);
-                return new PayloadResponse<PaginatedResponse<UserResponse>>(
-                    "Friend requests retrieved",
-                    true,
-                    makeFriendRequests.ToResponse(),
-          200);
+                return Ok(makeFriendRequests.ToResponse());
             }
             catch (Exception e)
             {
-                return new PayloadResponse<PaginatedResponse<UserResponse>>(e.Message, false, null, 400);
+                return BadRequest(e.Message);
             }
         }
 
         // get received friend requests
         [HttpGet("received-make-friend-requests")]
-        public async Task<PayloadResponse<PaginatedResponse<UserResponse>>> GetReceivedFriendRequests(
+        public async Task<IActionResult> GetReceivedFriendRequests(
             [FromQuery] PaginateRequest options
         )
         {
             try
             {
                 var receivedFriendRequests = await _userService.GetReceivedFriendRequests(options);
-                return new PayloadResponse<PaginatedResponse<UserResponse>>(
-                    "Received friend requests retrieved",
-                    true,
-                    receivedFriendRequests.ToResponse(),
-                    200);
+                return Ok(receivedFriendRequests.ToResponse());
             }
             catch (Exception e)
             {
-                return new PayloadResponse<PaginatedResponse<UserResponse>>(e.Message, false, null, 400);
+                return BadRequest(e.Message);
             }
         }
 
         // add friend
         [HttpPost("add-friend")]
-        public async Task<PayloadResponse<Boolean>> AddFriend(AddFriendRequest request)
+        public async Task<IActionResult> AddFriend(AddFriendRequest request)
         {
-            _logger.LogInformation("Add friend request: ");
             try
             {
                 await _userService.AddFriend(request);
-                return new PayloadResponse<Boolean>("Friend request sent", true, true);
+                return Ok();
             }
             catch (Exception e)
             {
-                return new PayloadResponse<Boolean>(e.Message, false, false, 400);
+                return BadRequest(e.Message);
             }
         }
 
         // confirm friend
         [HttpPost("confirm-friend")]
-        public async Task<PayloadResponse<Boolean>> ConfirmFriend(ConfirmFriendRequest request)
+        public async Task<IActionResult> ConfirmFriend(ConfirmFriendRequest request)
         {
             try
             {
                 await _userService.ConfirmFriend(request);
-                return new PayloadResponse<Boolean>("Friend request confirmed", true, true);
+                return Ok();
             }
             catch (Exception e)
             {
-                return new PayloadResponse<Boolean>(e.Message, false, false, 400);
+                return BadRequest(e.Message);
             }
         }
     }

@@ -23,28 +23,16 @@ namespace chat_be.Controllers
         /// Get messages
         /// </summary>
         /// <returns></returns>
-        public async Task<PayloadResponse<PaginatedResponse<MessageGroupModel>>> GetMessages([FromQuery] PaginateRequest options)
+        public async Task<IActionResult> GetMessages([FromQuery] PaginateRequest options)
         {
             try
             {
                 var res = await _messageService.GetMessages(options);
-                return new PayloadResponse<PaginatedResponse<MessageGroupModel>>()
-                {
-                    Message = "Get messages successfully",
-                    StatusCode = 200,
-                    Success = true,
-                    Payload = res
-                };
+                return Ok(res);
             }
             catch (Exception e)
             {
-                return new PayloadResponse<PaginatedResponse<MessageGroupModel>>()
-                {
-                    Message = e.Message,
-                    StatusCode = 500,
-                    Success = false,
-                    Payload = null
-                };
+                return BadRequest(e.Message);
             }
         }
 

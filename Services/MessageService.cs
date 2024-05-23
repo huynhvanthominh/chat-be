@@ -36,7 +36,7 @@ namespace chat_be.Services
             {
                 Id = m.Id,
                 Message = m.Message,
-                userId = m.UserId,
+                UserId = m.UserId,
                 CreatedAt = m.CreatedAt,
                 MessageGroupId = m.MessageGroupId
             })
@@ -72,7 +72,7 @@ namespace chat_be.Services
             return messageGroups;
         }
 
-        public async Task<MessageModel> SendMessage(SendMessageRequest content)
+        public async Task<MessageResponse> SendMessage(SendMessageRequest content)
         {
             var currentUser = await _authService.CurrentUser();
             var messageGroup = await _context.MessageGroupModels.GroupJoin(
@@ -101,7 +101,14 @@ namespace chat_be.Services
             };
             await _context.MessageModels.AddAsync(message);
             await _context.SaveChangesAsync();
-            return message;
+            return new MessageResponse{
+                Id = message.Id,
+                Message = message.Message,
+                UserId = message.UserId,
+                CreatedAt = message.CreatedAt,
+                MessageGroupId = message.MessageGroupId,
+                UserIds = messageGroup.MessageGroupUsers.Select(x => x.UserId).ToList()
+            };
         }
     }
 }

@@ -1,5 +1,7 @@
 using chat_be.Data;
 using chat_be.Models;
+using chat_be.Models.Requests;
+using chat_be.Models.Responses;
 using chat_be.Services.Abstracts;
 
 namespace chat_be.Services
@@ -17,10 +19,12 @@ namespace chat_be.Services
             _context = context;
             _logger = logger;
         }
-        public Task<List<UserModel>> GetUsers()
+        public async Task<PaginatedResponse<UserResponse>> GetUsers(PaginateRequest request)
         {
-            var users = _context.Users.ToList();
-            return Task.FromResult(users);
+            var users = await _context.Users
+            .Select(u => new UserResponse(u.Id, u.Username, u.DisplayName, u.Avatar))
+            .ToPaginatedListAsync(request.Page, request.CountPerPage);
+            return users;
         }
         public void initAdmin()
         {

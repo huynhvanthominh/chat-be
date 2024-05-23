@@ -1,5 +1,6 @@
 using chat_be.Mappers.Abstracts;
 using chat_be.Models;
+using chat_be.Models.Requests;
 using chat_be.Models.Responses;
 using chat_be.Services.Abstracts;
 using Microsoft.AspNetCore.Mvc;
@@ -24,27 +25,16 @@ namespace chat_be.Controllers.Admin
         }
 
         [HttpGet]
-        public async Task<PayloadResponse<PaginatedResponse<UserResponse>>> GetUsers()
+        public async Task<IActionResult> GetUsers([FromQuery] PaginateRequest options)
         {
             try
             {
-                var users = await _adminUserService.GetUsers();
-                return new PayloadResponse<PaginatedResponse<UserResponse>>(
-                    "Users retrieved",
-                    true,
-                    new PaginatedResponse<UserResponse>(
-                        1,
-                        1,
-                        1,
-                        users.Count,
-                        users.ToResponse()
-                        ),
-                    200
-                    );
+                var users = await _adminUserService.GetUsers(options);
+                return Ok(users);
             }
             catch (Exception e)
             {
-                return new PayloadResponse<PaginatedResponse<UserResponse>>(e.Message, false, null);
+                return BadRequest(e.Message);
             }
         }
     }

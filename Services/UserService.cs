@@ -190,6 +190,12 @@ namespace chat_be.Services
 
         public async Task<UserModel> UpdateUser(UserModel user)
         {
+            var userExists = await GetUser(user.Id);
+            if(userExists == null)
+            {
+                throw new Exception("User not found");
+            }
+            user.Password ??= userExists.Password;
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
             return await Task.FromResult(user);

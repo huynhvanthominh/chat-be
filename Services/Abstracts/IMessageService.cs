@@ -7,6 +7,6 @@ namespace chat_be.Services{
     {
         Task<PaginatedResponse<MessageGroupModel>> GetMessages(PaginateRequest options);
         Task<PaginatedResponse<MessageResponse>> GetMessage(int messageGroupId, PaginateRequest options);
-        Task<MessageModel> SendMessage(SendMessageRequest content);
+        Task<MessageResponse> SendMessage(SendMessageRequest content);
     }
 }
