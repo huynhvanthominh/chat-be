@@ -5,6 +5,6 @@ namespace chat_be.Models.Responses{
         public string Username { get; set; }
         public string DisplayName  { get; set; }
 
-        public int? MessageGroupId { get; set; }
+        public int MessageGroupId { get; set; }
     }
 }

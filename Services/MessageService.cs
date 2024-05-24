@@ -63,9 +63,10 @@ namespace chat_be.Services
                     {
                         Id = mgu.MessageGroupId,
                         Name = string.IsNullOrEmpty(mg.FirstOrDefault().Name)
-                        ? mg.FirstOrDefault().MessageGroupUsers.Where(x => x.UserId != currentUser.Id).FirstOrDefault().User.DisplayName
-                        : mg.FirstOrDefault().Name,
-                        MessageGroupUsers = mg.FirstOrDefault().MessageGroupUsers,
+                        ? mg.FirstOrDefault().MessageGroupUsers
+                            .FirstOrDefault(x => x.UserId != currentUser.Id).User.DisplayName
+                        : mg.First().Name,
+                        MessageGroupUsers = mg.FirstOrDefault()!.MessageGroupUsers,
                     }
                 )
             .ToPaginatedListAsync(options.Page, options.CountPerPage);
@@ -92,7 +93,7 @@ namespace chat_be.Services
             {
                 throw new Exception("Message group not found");
             }
-            var userInGroup = messageGroup.MessageGroupUsers.Where(x => x.UserId == currentUser.Id).FirstOrDefault() ?? throw new Exception("User not in group");
+            var userInGroup = messageGroup.MessageGroupUsers.FirstOrDefault(x => x.UserId == currentUser.Id) ?? throw new Exception("User not in group");
             var message = new MessageModel
             {
                 Message = content.Message,

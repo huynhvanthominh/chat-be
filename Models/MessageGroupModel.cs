@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace chat_be.Models
@@ -24,8 +23,8 @@ namespace chat_be.Models
         public int MessageGroupId { get; set; }
         public int UserId { get; set; }
         [NotMapped]
-        public UserModel User { get; set; }
+        public required UserModel User { get; set; }
         [NotMapped]
-        public MessageGroupModel MessageGroup { get; set; }
+        public required MessageGroupModel MessageGroup { get; set; }
     }
 }

@@ -2,14 +2,17 @@ using chat_be.Models;
 using chat_be.Models.Requests;
 using chat_be.Models.Responses;
 
-namespace chat_be.Services.Abstracts{
+namespace chat_be.Services.Abstracts
+{
 
-    public interface IUserService{
+    public interface IUserService
+    {
         Task<UserModel?> GetUser(string username);
         Task<UserModel?> GetUser(int userId);
         Task<UserModel?> GetUser(string username, string password);
         Task<PaginatedResponse<MakeFriendModel>> GetFriends(
-            PaginateRequest options
+            PaginateRequest options,
+            bool isAccepted = true
         );
         Task<PaginatedResponse<UserModel>> GetMakeFriendRequests(
             PaginateRequest options

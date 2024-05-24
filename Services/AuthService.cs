@@ -72,7 +72,7 @@ namespace chat_be.Services
             var claims = new[] {
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim(ClaimTypes.Name, user.DisplayName),
+                new Claim(ClaimTypes.Name, user.DisplayName ?? ""),
                 new Claim("username", user.Username),
                 new Claim("avatar", user.Avatar ?? "" ),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
@@ -82,7 +82,7 @@ namespace chat_be.Services
 
         private LoginResponse GetToken(IEnumerable<Claim> claims)
         {
-            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
             var token = new JwtSecurityToken(_config["Jwt:Issuer"],
               _config["Jwt:Issuer"],

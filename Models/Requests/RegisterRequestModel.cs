@@ -5,13 +5,19 @@ namespace chat_be.Models.Requests
     public class RegisterRequest
     {
         [Required]
-        public string Username { get; set; }
+        [MinLength(6)]
+        public required string Username { get; set; }
         [Required]
-        public string Password { get; set; }
+        [MinLength(6)]
+        public required string Password { get; set; }
         [Required]
+        [MinLength(6)]
         [Compare("Password")]
-        public string ConfirmPassword { get; set; }
+        public required string ConfirmPassword { get; set; }
 
-        public string DisplayName { get; set; }
+        public string? DisplayName { get; set; }
+        public RegisterRequest(){
+            DisplayName = DisplayName ?? Username;
+        }
     }
 }

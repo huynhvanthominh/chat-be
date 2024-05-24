@@ -87,6 +87,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<Func<IUserService>>(provider => () => provider.GetRequiredService<IUserService>());
 builder.Services.AddScoped<IMessageService, MessageService>();
+UserModelExtensions.Configure(builder.Services.BuildServiceProvider().GetRequiredService<IHttpContextAccessor>());
 // create admin service
 // using (var serviceScope = builder.Services.BuildServiceProvider().CreateScope())
 // {

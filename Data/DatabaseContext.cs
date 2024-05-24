@@ -26,17 +26,17 @@ namespace chat_be.Data
                 .HasKey(x => new { x.UserId, x.FriendId });
             modelBuilder.Entity<UserModel>()
             .HasData(
-                new UserModel("admin", "admin", UserRole.admin, "Admin") { Id = 1 },
-                new UserModel("user1", "user", UserRole.user, "User 1") { Id = 2 },
-                new UserModel("user2", "user", UserRole.user, "User 2") { Id = 3 },
-                new UserModel("user3", "user", UserRole.user, "User 3") { Id = 4 },
-                new UserModel("user4", "user", UserRole.user, "User 4") { Id = 5 },
-                new UserModel("user5", "user", UserRole.user, "User 5") { Id = 6 },
-                new UserModel("user6", "user", UserRole.user, "User 6") { Id = 7 },
-                new UserModel("user7", "user", UserRole.user, "User 7") { Id = 8 },
-                new UserModel("user8", "user", UserRole.user, "User 8") { Id = 9 },
-                new UserModel("user9", "user", UserRole.user, "User 9") { Id = 10 },
-                new UserModel("user10", "user", UserRole.user, "User 10") { Id = 11 }
+                new UserModel("admin", BCrypt.Net.BCrypt.HashPassword("admin"), UserRole.admin, "Admin") { Id = 1 },
+                new UserModel("user1", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 1") { Id = 2 },
+                new UserModel("user2", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 2") { Id = 3 },
+                new UserModel("user3", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 3") { Id = 4 },
+                new UserModel("user4", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 4") { Id = 5 },
+                new UserModel("user5", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 5") { Id = 6 },
+                new UserModel("user6", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 6") { Id = 7 },
+                new UserModel("user7", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 7") { Id = 8 },
+                new UserModel("user8", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 8") { Id = 9 },
+                new UserModel("user9", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 9") { Id = 10 },
+                new UserModel("user10", BCrypt.Net.BCrypt.HashPassword("user"), UserRole.user, "User 10") { Id = 11 }
                 );
                 modelBuilder.Entity<MessageGroupUserModel>()
                 .HasOne(mgu => mgu.MessageGroup)

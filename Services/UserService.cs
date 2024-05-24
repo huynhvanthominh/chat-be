@@ -24,13 +24,19 @@ namespace chat_be.Services
             _logger = logger;
         }
         public async Task<PaginatedResponse<MakeFriendModel>> GetFriends(
-            PaginateRequest options
+            PaginateRequest options,
+            bool isAccepted = true
         )
         {
             var currentUser = await _authService.CurrentUser();
-            var friends = await _context.MakeFriendModels
-                .Where(x => (x.UserId == currentUser.Id || x.FriendId == currentUser.Id) && x.IsAccepted)
-                .Join(
+            var query = _context.MakeFriendModels;
+            if (options.Search != null)
+            {
+                query.Where(x => x.User.Username.Contains(options.Search));
+            }
+            var friends = await query
+            .Where(x => (x.UserId == currentUser.Id || x.FriendId == currentUser.Id) && x.IsAccepted == isAccepted)
+            .Join(
                     _context.Users,
                     x => x.UserId == currentUser.Id ? x.FriendId : x.UserId,
                     x => x.Id,
@@ -48,12 +54,16 @@ namespace chat_be.Services
                     var messageGroupUser1 = new MessageGroupUserModel()
                     {
                         MessageGroupId = messageGroup.Id,
-                        UserId = currentUser.Id
+                        UserId = currentUser.Id,
+                        MessageGroup = messageGroup,
+                        User = currentUser
                     };
                     var messageGroupUser2 = new MessageGroupUserModel()
                     {
                         MessageGroupId = messageGroup.Id,
-                        UserId = x.user.Id
+                        UserId = x.user.Id,
+                        MessageGroup = messageGroup,
+                        User = x.user
                     };
                     await _context.MessageGroupUserModels.AddAsync(messageGroupUser1);
                     await _context.MessageGroupUserModels.AddAsync(messageGroupUser2);
@@ -119,7 +129,7 @@ namespace chat_be.Services
 
         public Task<UserModel?> GetUser(string username)
         {
-            return _context.Users.FirstOrDefaultAsync(x => x.Username == username);
+            return Task.FromResult(_context.Users.AsEnumerable().FirstOrDefault(x => x.Username.Equals(username, StringComparison.Ordinal)));
         }
 
         public Task<UserModel?> GetUser(int userId)
@@ -127,9 +137,18 @@ namespace chat_be.Services
             return _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
         }
 
-        public Task<UserModel?> GetUser(string username, string password)
+        public async Task<UserModel?> GetUser(string username, string password)
         {
-            return _context.Users.FirstOrDefaultAsync(x => x.Username == username && x.Password == password);
+            var user = await GetUser(username);
+            if (user == null)
+            {
+                throw new Exception("User not found");
+            }
+            if (!BCrypt.Net.BCrypt.Verify(password, user.Password))
+            {
+                throw new Exception("Invalid username or password");
+            }
+            return await Task.FromResult(user);
         }
 
         public async Task<MakeFriendModel> AddFriend(AddFriendRequest request)
@@ -150,12 +169,16 @@ namespace chat_be.Services
             var messageGroupUser1 = new MessageGroupUserModel()
             {
                 MessageGroupId = messageGroup.Id,
-                UserId = currentUser.Id
+                UserId = currentUser.Id,
+                User = currentUser,
+                MessageGroup = messageGroup
             };
             var messageGroupUser2 = new MessageGroupUserModel()
             {
                 MessageGroupId = messageGroup.Id,
-                UserId = user.Id
+                UserId = user.Id,
+                User = user,
+                MessageGroup = messageGroup
             };
             await _context.MessageGroupUserModels.AddAsync(messageGroupUser1);
             await _context.MessageGroupUserModels.AddAsync(messageGroupUser2);
@@ -183,6 +206,12 @@ namespace chat_be.Services
 
         public async Task<UserModel> CreateUser(UserModel user)
         {
+            var userExists = await GetUser(user.Username);
+            if (userExists != null)
+            {
+                throw new Exception("User already exists");
+            }
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return await Task.FromResult(user);
@@ -191,7 +220,7 @@ namespace chat_be.Services
         public async Task<UserModel> UpdateUser(UserModel user)
         {
             var userExists = await GetUser(user.Id);
-            if(userExists == null)
+            if (userExists == null)
             {
                 throw new Exception("User not found");
             }
