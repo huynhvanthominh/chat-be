@@ -4,6 +4,7 @@ using chat_be.Models.Requests;
 using chat_be.Models.Responses;
 using chat_be.Services.Abstracts;
 using Microsoft.EntityFrameworkCore;
+using NuGet.Versioning;
 
 namespace chat_be.Services
 {
@@ -151,6 +152,18 @@ namespace chat_be.Services
             return await Task.FromResult(user);
         }
 
+        public async Task<PaginatedResponse<UserResponse>> SearchUsers(PaginateRequest options)
+        {
+            var query = _context.Users;
+            query.Where(x => x.Id != _authService.CurrentUser().Id)
+            .Where(x => x.Role == UserRole.user);
+
+            if (options.Search != null)
+            {
+                query.Where(x => x.Username.Contains(options.Search) || (x.DisplayName != null && x.DisplayName.Contains(options.Search)));
+            }
+            return await query.Select(x => x.ToResponse()).ToPaginatedListAsync(options.Page, options.CountPerPage);
+        }
         public async Task<MakeFriendModel> AddFriend(AddFriendRequest request)
         {
             var currentUser = await _authService.CurrentUser();
@@ -228,20 +241,6 @@ namespace chat_be.Services
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
             return await Task.FromResult(user);
-        }
-    }
-
-    public static class IUserServiceExtensions
-    {
-        public static PaginatedResponse<UserResponse> ToResponse(this PaginatedResponse<UserModel> paginatedResponse)
-        {
-            return new PaginatedResponse<UserResponse>(
-                paginatedResponse.TotalPage,
-                paginatedResponse.CurrentPage,
-                paginatedResponse.CountPerPage,
-                paginatedResponse.TotalCount,
-                paginatedResponse.Data.Select(x => x.ToResponse()).ToList()
-            )!;
         }
     }
 }

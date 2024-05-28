@@ -16,12 +16,13 @@ public static class UserModelExtensions
         {
             throw new Exception("HttpContextAccessor is not configured");
         }
+        var http = _httpContextAccessor.HttpContext.Request.Scheme + "://" + _httpContextAccessor.HttpContext.Request.Host.Value + "/";
 
         return new UserResponse(
             user.Id,
             user.Username,
             user.DisplayName ?? "",
-            _httpContextAccessor.HttpContext.Request.Host.Value + user.Avatar
+            http + user.Avatar
         );
     }
     public static List<UserResponse> ToResponse(this List<UserModel> users)

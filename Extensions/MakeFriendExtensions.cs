@@ -12,7 +12,7 @@ namespace chat_be.Extensions
                 UserId = makeFriend.UserId == current.Id ? makeFriend.FriendId : makeFriend.UserId,
                 Username = makeFriend.UserId == current.Id ? makeFriend.Friend.Username : makeFriend.User.Username,
                 DisplayName = makeFriend.UserId == current.Id ? makeFriend.Friend.DisplayName : makeFriend.User.DisplayName,
-                MessageGroupId = makeFriend.MessageGroupId
+                MessageGroupId = makeFriend.MessageGroupId ?? 0,
             };
         }
 

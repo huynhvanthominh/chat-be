@@ -1,5 +1,7 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 namespace chat_be.Models
 {
 
@@ -9,6 +11,7 @@ namespace chat_be.Models
         user
     }
 
+    [Index(nameof(Username), nameof(DisplayName), IsUnique = true)]
     public class UserModel
     {
         [Key]
@@ -25,6 +28,9 @@ namespace chat_be.Models
         public string? DisplayName { get; set; }
         [AllowNull]
         public string? Avatar { get; set; }
+
+        [NotMapped]
+        public ICollection<MakeFriendModel> Friends { get; set; }
 
         public UserModel()
         {

@@ -20,6 +20,9 @@ namespace chat_be.Services.Abstracts
         Task<PaginatedResponse<UserModel>> GetReceivedFriendRequests(
             PaginateRequest options
         );
+        Task<PaginatedResponse<UserResponse>> SearchUsers(
+            PaginateRequest options
+        );
         Task<MakeFriendModel> AddFriend(AddFriendRequest request);
         Task<MakeFriendModel> ConfirmFriend(ConfirmFriendRequest request);
         Task<UserModel> CreateUser(UserModel user);

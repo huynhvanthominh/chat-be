@@ -51,6 +51,23 @@ namespace chat_be.Controllers
             }
         }
 
+        // search friends
+        [HttpGet("search-friends")]
+        public async Task<IActionResult> SearchFriends(
+            [FromQuery] PaginateRequest options
+        )
+        {
+            try
+            {
+                var users = await _userService.SearchUsers(options);
+                return Ok(users);
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+        }
+
         // get friend requests
         [HttpGet("make-friend-requests")]
         public async Task<IActionResult> GetMakeFriendRequests(
