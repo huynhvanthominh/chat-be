@@ -4,7 +4,7 @@ using chat_be.Models.Requests;
 using chat_be.Models.Responses;
 using chat_be.Services.Abstracts;
 using Microsoft.EntityFrameworkCore;
-using NuGet.Versioning;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 
 namespace chat_be.Services
 {
@@ -154,14 +154,14 @@ namespace chat_be.Services
 
         public async Task<PaginatedResponse<UserResponse>> SearchUsers(PaginateRequest options)
         {
-            var query = _context.Users;
-            query.Where(x => x.Id != _authService.CurrentUser().Id)
-            .Where(x => x.Role == UserRole.user);
+            var currentUser = await _authService.CurrentUser();
+            var query = _context.Users.Where(x => x.Role == UserRole.user);
+            query = query.Where(x => x.Id != currentUser.Id);
 
-            if (options.Search != null)
-            {
-                query.Where(x => x.Username.Contains(options.Search) || (x.DisplayName != null && x.DisplayName.Contains(options.Search)));
-            }
+            // if (options.Search != null)
+            // {
+            //     query.Where(x => x.Username.Contains(options.Search) || (x.DisplayName != null && x.DisplayName.Contains(options.Search)));
+            // }
             return await query.Select(x => x.ToResponse()).ToPaginatedListAsync(options.Page, options.CountPerPage);
         }
         public async Task<MakeFriendModel> AddFriend(AddFriendRequest request)
@@ -195,10 +195,10 @@ namespace chat_be.Services
             };
             await _context.MessageGroupUserModels.AddAsync(messageGroupUser1);
             await _context.MessageGroupUserModels.AddAsync(messageGroupUser2);
-            await _context.SaveChangesAsync();
+            // await _context.SaveChangesAsync();
             var makeFriend = new MakeFriendModel(currentUser.Id, user.Id, messageGroup.Id);
             _context.MakeFriendModels.Add(makeFriend);
-            await _context.SaveChangesAsync();
+            // await _context.SaveChangesAsync();
             return await Task.FromResult(makeFriend);
         }
 

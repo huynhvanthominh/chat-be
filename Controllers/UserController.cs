@@ -102,20 +102,20 @@ namespace chat_be.Controllers
             }
         }
 
-        // add friend
-        [HttpPost("add-friend")]
-        public async Task<IActionResult> AddFriend(AddFriendRequest request)
-        {
-            try
-            {
-                await _userService.AddFriend(request);
-                return Ok();
-            }
-            catch (Exception e)
-            {
-                return BadRequest(e.Message);
-            }
-        }
+        // // add friend
+        // [HttpPost("add-friend")]
+        // public async Task<IActionResult> AddFriend(AddFriendRequest request)
+        // {
+        //     try
+        //     {
+        //         await _userService.AddFriend(request);
+        //         return Ok();
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return BadRequest(e.Message);
+        //     }
+        // }
 
         // confirm friend
         [HttpPost("confirm-friend")]

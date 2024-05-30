@@ -2,7 +2,6 @@ using chat_be.Models.Requests;
 using chat_be.Services;
 using chat_be.Services.Abstracts;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.SignalR;
 
 namespace chat_be.Hubs

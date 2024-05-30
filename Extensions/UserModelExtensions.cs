@@ -22,7 +22,7 @@ public static class UserModelExtensions
             user.Id,
             user.Username,
             user.DisplayName ?? "",
-            http + user.Avatar
+            user.Avatar?.Length > 0 ? http + user.Avatar : "https://www.w3schools.com/w3images/avatar2.png"
         );
     }
     public static List<UserResponse> ToResponse(this List<UserModel> users)
